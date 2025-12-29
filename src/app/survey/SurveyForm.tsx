@@ -466,10 +466,9 @@ export default function SurveyForm() {
         ],
         required: true,
       },
-      // 조건부: 사료를 즐기지 않는 경우에만 표시
+      // 조건부: 사료를 즐기지 않는 경우에만 표시 (2가지 옵션만)
       ...(formData.foodReaction &&
       [
-        "그냥 그럭저럭 먹는다",
         "잘 먹지 않고 음식을 남긴다",
         "먹긴 먹는데 나눠서 조금씩 텀을 누고 먹는다",
       ].includes(formData.foodReaction)
