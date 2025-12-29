@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import DatePicker from "react-datepicker";
@@ -211,556 +211,582 @@ export default function SurveyForm() {
     return emailRegex.test(email);
   };
 
-  // 질문 구성
-  const questions = [
-    // 보호자 정보
-    {
-      id: "ownerName",
-      title: "보호자 정보",
-      subtitle: "보호자분의 이름을 알려주세요",
-      type: "text",
-      placeholder: "이름을 입력해주세요",
-      required: true,
-    },
-    {
-      id: "phoneNumber",
-      title: "보호자 정보",
-      subtitle: "보호자분의 휴대폰 번호를 알려주세요",
-      type: "tel",
-      placeholder: "휴대폰 번호를 입력해주세요",
-      required: true,
-    },
-    {
-      id: "email",
-      title: "보호자 정보",
-      subtitle: "보호자분의 이메일 주소를 알려주세요",
-      type: "email",
-      placeholder: "이메일 주소를 입력해주세요",
-      required: true,
-    },
+  // 질문 구성 (formData 변경 시 재생성되도록 useMemo 사용)
+  const questions = useMemo(
+    () => [
+      // 보호자 정보
+      {
+        id: "ownerName",
+        title: "보호자 정보",
+        subtitle: "보호자분의 이름을 알려주세요",
+        type: "text",
+        placeholder: "이름을 입력해주세요",
+        required: true,
+      },
+      {
+        id: "phoneNumber",
+        title: "보호자 정보",
+        subtitle: "보호자분의 휴대폰 번호를 알려주세요",
+        type: "tel",
+        placeholder: "휴대폰 번호를 입력해주세요",
+        required: true,
+      },
+      {
+        id: "email",
+        title: "보호자 정보",
+        subtitle: "보호자분의 이메일 주소를 알려주세요",
+        type: "email",
+        placeholder: "이메일 주소를 입력해주세요",
+        required: true,
+      },
 
-    // 반려동물 기본 정보
-    // 1. 이름 (분석페이지 미경유 시에만)
-    ...(needsProductAnalysis
-      ? [
-          {
-            id: "paDogName",
-            title: "반려동물 기본 정보",
-            subtitle: "서비스를 받을 아이의 이름을 알려주세요",
-            type: "text",
-            placeholder: "반려견 이름을 입력해주세요",
-            required: true,
-          },
-        ]
-      : []),
+      // 반려동물 기본 정보
+      // 1. 이름 (분석페이지 미경유 시에만)
+      ...(needsProductAnalysis
+        ? [
+            {
+              id: "paDogName",
+              title: "반려동물 기본 정보",
+              subtitle: "서비스를 받을 아이의 이름을 알려주세요",
+              type: "text",
+              placeholder: "반려견 이름을 입력해주세요",
+              required: true,
+            },
+          ]
+        : []),
 
-    // 2. 생년월일 (모든 사용자)
-    {
-      id: "birthDate",
-      title: "반려동물 기본 정보",
-      subtitle: "아이의 생년월일 또는 추정 나이를 알려주세요",
-      description: "만약 정확한 날짜를 모르실 경우, 추정 날짜로 기입해주세요.",
-      type: "date",
-      placeholder: "YYYY-MM-DD",
-      required: true,
-    },
+      // 2. 생년월일 (모든 사용자)
+      {
+        id: "birthDate",
+        title: "반려동물 기본 정보",
+        subtitle: "아이의 생년월일 또는 추정 나이를 알려주세요",
+        description:
+          "만약 정확한 날짜를 모르실 경우, 추정 날짜로 기입해주세요.",
+        type: "date",
+        placeholder: "YYYY-MM-DD",
+        required: true,
+      },
 
-    // 3. 품종 (분석페이지 미경유 시에만)
-    ...(needsProductAnalysis
-      ? [
-          {
-            id: "paDogBreed",
-            title: "반려동물 기본 정보",
-            subtitle: "아이의 품종 또는 추정 품종을 알려주세요",
-            description:
-              "만약 정확한 품종을 모르실 경우, 추정 품종 또는 외적인 특징을 기입해주세요.",
-            type: "text",
-            placeholder: "예: 골든 리트리버",
-            required: true,
-          },
-        ]
-      : []),
+      // 3. 품종 (분석페이지 미경유 시에만)
+      ...(needsProductAnalysis
+        ? [
+            {
+              id: "paDogBreed",
+              title: "반려동물 기본 정보",
+              subtitle: "아이의 품종 또는 추정 품종을 알려주세요",
+              description:
+                "만약 정확한 품종을 모르실 경우, 추정 품종 또는 외적인 특징을 기입해주세요.",
+              type: "text",
+              placeholder: "예: 골든 리트리버",
+              required: true,
+            },
+          ]
+        : []),
 
-    // 4. 성별과 중성화 여부 (모든 사용자)
-    {
-      id: "gender",
-      title: "반려동물 기본 정보",
-      subtitle: "아이의 성별과 중성화 여부를 알려주세요",
-      type: "select",
-      options: [
-        "남아, 중성화 완료",
-        "남아, 중성화 미완료",
-        "여아, 중성화 완료",
-        "여아, 중성화 미완료",
-      ],
-      required: true,
-    },
+      // 4. 성별과 중성화 여부 (모든 사용자)
+      {
+        id: "gender",
+        title: "반려동물 기본 정보",
+        subtitle: "아이의 성별과 중성화 여부를 알려주세요",
+        type: "select",
+        options: [
+          "남아, 중성화 완료",
+          "남아, 중성화 미완료",
+          "여아, 중성화 완료",
+          "여아, 중성화 미완료",
+        ],
+        required: true,
+      },
 
-    // 5. 임신/수유 (조건부: 여아 중성화 미완료일 경우에만)
-    ...(formData.gender === "여아, 중성화 미완료"
-      ? [
-          {
-            id: "pregnant",
-            title: "반려동물 기본 정보",
-            subtitle: "아이가 현재 임신 또는 수유중인가요?",
-            type: "select",
-            options: ["네", "아니오", "해당없음"],
-            required: true,
-          },
-        ]
-      : []),
+      // 5. 임신/수유 (조건부: 여아 중성화 미완료일 경우에만)
+      ...(formData.gender === "여아, 중성화 미완료"
+        ? [
+            {
+              id: "pregnant",
+              title: "반려동물 기본 정보",
+              subtitle: "아이가 현재 임신 또는 수유중인가요?",
+              type: "select",
+              options: ["네", "아니오", "해당없음"],
+              required: true,
+            },
+          ]
+        : []),
 
-    // 6. 체중 (모든 사용자)
-    {
-      id: "weight",
-      title: "반려동물 기본 정보",
-      subtitle: "아이의 체중을 알려주세요",
-      description: "kg 기준으로 소수점 포함하여 최대한 명확하게 입력해주세요.",
-      type: "number",
-      placeholder: "예: 10.5",
-      required: true,
-    },
+      // 6. 체중 (모든 사용자)
+      {
+        id: "weight",
+        title: "반려동물 기본 정보",
+        subtitle: "아이의 체중을 알려주세요",
+        description:
+          "kg 기준으로 소수점 포함하여 최대한 명확하게 입력해주세요.",
+        type: "number",
+        placeholder: "예: 10.5",
+        required: true,
+      },
 
-    // 7. BCS
-    {
-      id: "bcs",
-      title: "반려동물 기본 정보",
-      subtitle: "아이의 BCS(Body Condition Score)를 선택해주세요",
-      description:
-        "아래 이미지를 참고하여, 위와 옆에서 아이를 관찰하고 가장 유사한 체형을 골라 점수로 기입해주세요.\n\n📌 BCS란? BCS(신체충실지수)는 반려동물의 비만도를 평가하는 대표적인 방법으로, 체중이나 키가 아니라 외형과 촉진(만져보기)으로 판단하는 것입니다.",
-      image: "/img/survey/bcs.png",
-      type: "select",
-      options: ["1점", "2점", "3점", "4점", "5점", "6점", "7점", "8점", "9점"],
-      required: true,
-    },
+      // 7. BCS
+      {
+        id: "bcs",
+        title: "반려동물 기본 정보",
+        subtitle: "아이의 BCS(Body Condition Score)를 선택해주세요",
+        description:
+          "아래 이미지를 참고하여, 위와 옆에서 아이를 관찰하고 가장 유사한 체형을 골라 점수로 기입해주세요.\n\n📌 BCS란? BCS(신체충실지수)는 반려동물의 비만도를 평가하는 대표적인 방법으로, 체중이나 키가 아니라 외형과 촉진(만져보기)으로 판단하는 것입니다.",
+        image: "/img/survey/bcs.png",
+        type: "select",
+        options: [
+          "1점",
+          "2점",
+          "3점",
+          "4점",
+          "5점",
+          "6점",
+          "7점",
+          "8점",
+          "9점",
+        ],
+        required: true,
+      },
 
-    // 8. Rawsome
-    {
-      id: "rawsome",
-      title: "반려동물 기본 정보",
-      subtitle:
-        "아이의 갈비뼈를 직접 만진 후, 아래 이미지와 비교해 가장 유사한 촉감을 선택해주세요",
-      description:
-        "📌 Rawsome이란? Rawsome 체크는 미국생식제조업체 자료에서 유래한 간단한 촉진법으로, 손의 감각을 활용해 반려동물의 갈비뼈 상태를 평가하는 것입니다.",
-      image: "/img/survey/rawsome.png",
-      type: "select",
-      options: [
-        "주먹 쥔 손등",
-        "손을 편 손등",
-        "손을 편 손바닥",
-        "손바닥 두툼한 부위",
-      ],
-      required: true,
-    },
+      // 8. Rawsome
+      {
+        id: "rawsome",
+        title: "반려동물 기본 정보",
+        subtitle:
+          "아이의 갈비뼈를 직접 만진 후, 아래 이미지와 비교해 가장 유사한 촉감을 선택해주세요",
+        description:
+          "📌 Rawsome이란? Rawsome 체크는 미국생식제조업체 자료에서 유래한 간단한 촉진법으로, 손의 감각을 활용해 반려동물의 갈비뼈 상태를 평가하는 것입니다.",
+        image: "/img/survey/rawsome.png",
+        type: "select",
+        options: [
+          "주먹 쥔 손등",
+          "손을 편 손등",
+          "손을 편 손바닥",
+          "손바닥 두툼한 부위",
+        ],
+        required: true,
+      },
 
-    // 9. 체중 변화
-    {
-      id: "weightChange",
-      title: "반려동물 기본 정보",
-      subtitle:
-        "최근 3개월 기준 체중의 5~10% 이상 변화가 있었나요? 있었다면 관련하여 (예상되는) 원인과 상황을 자세히 설명해주세요",
-      description:
-        '5~10% 이상의 변화란? 10kg 강아지의 경우 3개월 사이 0.5~1kg 이상의 변화. 없다면 "없다"라고 작성해주세요.',
-      type: "textarea",
-      placeholder: "체중 변화 및 원인을 입력해주세요",
-      required: true,
-    },
+      // 9. 체중 변화
+      {
+        id: "weightChange",
+        title: "반려동물 기본 정보",
+        subtitle:
+          "최근 3개월 기준 체중의 5~10% 이상 변화가 있었나요? 있었다면 관련하여 (예상되는) 원인과 상황을 자세히 설명해주세요",
+        description:
+          '5~10% 이상의 변화란? 10kg 강아지의 경우 3개월 사이 0.5~1kg 이상의 변화. 없다면 "없다"라고 작성해주세요.',
+        type: "textarea",
+        placeholder: "체중 변화 및 원인을 입력해주세요",
+        required: true,
+      },
 
-    // 10. 활동 수준
-    {
-      id: "activityLevel",
-      title: "반려동물 기본 정보",
-      subtitle: "아이의 활동 수준에 대해 알려주세요",
-      type: "select",
-      options: [
-        "저활동 (Low activity) / 일일 운동 시간: 30분 미만 / 하루 대부분을 실내에서 보내며, 운동량이 적은 경우. 주로 앉아있거나 누워있는 시간이 많음",
-        "보통 활동 (Moderate activity) / 일일 운동 시간: 30분 ~ 1시간 / 규칙적인 산책과 적당한 운동을 하는 경우. 실내외 활동이 골고루 있음",
-        "고활동 (High activity) / 일일 운동 시간: 1시간 이상 / 활발한 운동과 장시간 야외 활동을 하는 경우. 달리기/점프/놀이 등 활발한 신체 활동이 많음",
-        "고활동 이상 / 워킹독, 스포츠독 등의 수준의 높은 신체 활동",
-      ],
-      required: true,
-    },
+      // 10. 활동 수준
+      {
+        id: "activityLevel",
+        title: "반려동물 기본 정보",
+        subtitle: "아이의 활동 수준에 대해 알려주세요",
+        type: "select",
+        options: [
+          "저활동 (Low activity) / 일일 운동 시간: 30분 미만 / 하루 대부분을 실내에서 보내며, 운동량이 적은 경우. 주로 앉아있거나 누워있는 시간이 많음",
+          "보통 활동 (Moderate activity) / 일일 운동 시간: 30분 ~ 1시간 / 규칙적인 산책과 적당한 운동을 하는 경우. 실내외 활동이 골고루 있음",
+          "고활동 (High activity) / 일일 운동 시간: 1시간 이상 / 활발한 운동과 장시간 야외 활동을 하는 경우. 달리기/점프/놀이 등 활발한 신체 활동이 많음",
+          "고활동 이상 / 워킹독, 스포츠독 등의 수준의 높은 신체 활동",
+        ],
+        required: true,
+      },
 
-    // 반려동물 건강 상태 정보
-    {
-      id: "healthIssues",
-      title: "반려동물 건강 상태 정보",
-      subtitle:
-        "과거와 현재를 포함하여 겪고 있는 질병/질환이나 건강 문제가 있다면 알려주세요",
-      description: '없을 경우, "없다"라고 작성해주세요.',
-      type: "textarea",
-      placeholder: "건강 문제를 입력해주세요",
-      required: true,
-    },
-    {
-      id: "allergies",
-      title: "반려동물 건강 상태 정보",
-      subtitle: "알러지원 또는 민감성을 가진 음식이 있다면 알려주세요",
-      description: '없을 경우, "없다"라고 작성해주세요.',
-      type: "textarea",
-      placeholder: "알러지 정보를 입력해주세요",
-      required: true,
-    },
-    {
-      id: "medications",
-      title: "반려동물 건강 상태 정보",
-      subtitle: "현재 복용 중인 약물이 있다면 알려주세요 (영양제가 아닌 약물)",
-      description: '없을 경우, "없다"라고 작성해주세요.',
-      type: "textarea",
-      placeholder: "복용 중인 약물을 입력해주세요",
-      required: true,
-    },
+      // 반려동물 건강 상태 정보
+      {
+        id: "healthIssues",
+        title: "반려동물 건강 상태 정보",
+        subtitle:
+          "과거와 현재를 포함하여 겪고 있는 질병/질환이나 건강 문제가 있다면 알려주세요",
+        description: '없을 경우, "없다"라고 작성해주세요.',
+        type: "textarea",
+        placeholder: "건강 문제를 입력해주세요",
+        required: true,
+      },
+      {
+        id: "allergies",
+        title: "반려동물 건강 상태 정보",
+        subtitle: "알러지원 또는 민감성을 가진 음식이 있다면 알려주세요",
+        description: '없을 경우, "없다"라고 작성해주세요.',
+        type: "textarea",
+        placeholder: "알러지 정보를 입력해주세요",
+        required: true,
+      },
+      {
+        id: "medications",
+        title: "반려동물 건강 상태 정보",
+        subtitle:
+          "현재 복용 중인 약물이 있다면 알려주세요 (영양제가 아닌 약물)",
+        description: '없을 경우, "없다"라고 작성해주세요.',
+        type: "textarea",
+        placeholder: "복용 중인 약물을 입력해주세요",
+        required: true,
+      },
 
-    // 현재 급여 식단 정보
-    {
-      id: "currentFoods",
-      title: "현재 급여 식단 정보",
-      subtitle:
-        "현재 급여 중인 주식(사료)/ 보조식(토퍼)/ 영양제의 브랜드 및 제품명을 모두 알려주세요",
-      description:
-        "⚠️ 꼭 정확한 브랜드와 제품명을 기입해주시기 바랍니다. 부정확할 경우, 다른 제품으로 분석 및 리포트가 작성될 수 있습니다!",
-      example:
-        "<좋은 예시>\n1. 주식(사료): 카나간 스코티쉬 살몬 포 독\n2. 주식(사료): 지위픽 스팀드라이 독 닭고기&과일\n3. 보조식(토퍼): 스텔라앤츄이스 디너패티 치킨\n4. 영양제: 묘견서 프로바이오틱스 덴센",
-      type: "textarea",
-      placeholder: "사료 및 영양제 정보를 입력해주세요",
-      required: true,
-    },
-    {
-      id: "feedingAmount",
-      title: "현재 급여 식단 정보",
-      subtitle:
-        "현재 급여 중인 주식(사료)/ 보조식(토퍼)/ 영양제의 1일 급여량 및 급여 횟수를 알려주세요",
-      description:
-        "⚠️ 꼭 정확한 급여량(g)을 기입해주시기 바랍니다. 부정확할 경우, 현재 섭취 에너지와 영양소 분석이 다르게 작성될 수 있습니다!",
-      example:
-        "<좋은 예시>\n급여 타이밍: 아침 1회, 저녁 1회 = 총 2회\n1. 주식1(사료): 카나간 스코티쉬 살몬 포 독 / 하루 기준 45g\n2. 주식2(사료): 지위픽 스팀드라이 독 닭고기&과일 / 하루 기준 25g\n3. 보조식(토퍼): 스텔라앤츄이스 디너패티 치킨 / 하루 기준 1개\n4. 영양제: 묘견서 프로바이오틱스 덴센 / 하루 기준 1알\n*보조식은 밀믹서/토퍼 등 단일 급여가 어렵고 주식 위에 보충해주는 제품을 의미합니다.",
-      type: "textarea",
-      placeholder: "급여량 및 급여 횟수를 입력해주세요",
-      required: true,
-    },
-    {
-      id: "foodReaction",
-      title: "현재 급여 식단 정보",
-      subtitle: "현재 먹고 있는 사료에 대한 반응은 어떤가요?",
-      type: "select",
-      options: [
-        "매우 즐긴다",
-        "즐긴다",
+      // 현재 급여 식단 정보
+      {
+        id: "currentFoods",
+        title: "현재 급여 식단 정보",
+        subtitle:
+          "현재 급여 중인 주식(사료)/ 보조식(토퍼)/ 영양제의 브랜드 및 제품명을 모두 알려주세요",
+        description:
+          "⚠️ 꼭 정확한 브랜드와 제품명을 기입해주시기 바랍니다. 부정확할 경우, 다른 제품으로 분석 및 리포트가 작성될 수 있습니다!",
+        example:
+          "<좋은 예시>\n1. 주식(사료): 카나간 스코티쉬 살몬 포 독\n2. 주식(사료): 지위픽 스팀드라이 독 닭고기&과일\n3. 보조식(토퍼): 스텔라앤츄이스 디너패티 치킨\n4. 영양제: 묘견서 프로바이오틱스 덴센",
+        type: "textarea",
+        placeholder: "사료 및 영양제 정보를 입력해주세요",
+        required: true,
+      },
+      {
+        id: "feedingAmount",
+        title: "현재 급여 식단 정보",
+        subtitle:
+          "현재 급여 중인 주식(사료)/ 보조식(토퍼)/ 영양제의 1일 급여량 및 급여 횟수를 알려주세요",
+        description:
+          "⚠️ 꼭 정확한 급여량(g)을 기입해주시기 바랍니다. 부정확할 경우, 현재 섭취 에너지와 영양소 분석이 다르게 작성될 수 있습니다!",
+        example:
+          "<좋은 예시>\n급여 타이밍: 아침 1회, 저녁 1회 = 총 2회\n1. 주식1(사료): 카나간 스코티쉬 살몬 포 독 / 하루 기준 45g\n2. 주식2(사료): 지위픽 스팀드라이 독 닭고기&과일 / 하루 기준 25g\n3. 보조식(토퍼): 스텔라앤츄이스 디너패티 치킨 / 하루 기준 1개\n4. 영양제: 묘견서 프로바이오틱스 덴센 / 하루 기준 1알\n*보조식은 밀믹서/토퍼 등 단일 급여가 어렵고 주식 위에 보충해주는 제품을 의미합니다.",
+        type: "textarea",
+        placeholder: "급여량 및 급여 횟수를 입력해주세요",
+        required: true,
+      },
+      {
+        id: "foodReaction",
+        title: "현재 급여 식단 정보",
+        subtitle: "현재 먹고 있는 사료에 대한 반응은 어떤가요?",
+        type: "select",
+        options: [
+          "매우 즐긴다",
+          "즐긴다",
+          "그냥 그럭저럭 먹는다",
+          "잘 먹지 않고 음식을 남긴다",
+          "먹긴 먹는데 나눠서 조금씩 텀을 누고 먹는다",
+        ],
+        required: true,
+      },
+      // 조건부: 사료를 즐기지 않는 경우에만 표시
+      ...(formData.foodReaction &&
+      [
         "그냥 그럭저럭 먹는다",
         "잘 먹지 않고 음식을 남긴다",
         "먹긴 먹는데 나눠서 조금씩 텀을 누고 먹는다",
-      ],
-      required: true,
-    },
-    // 조건부: 사료를 즐기지 않는 경우에만 표시
-    ...(formData.foodReaction &&
+      ].includes(formData.foodReaction)
+        ? [
+            {
+              id: "foodDislikeReason",
+              title: "현재 급여 식단 정보",
+              subtitle:
+                "현재 먹이고 있는 사료를 '즐기지 않는다면', 이유가 무엇이라고 생각하시나요?",
+              type: "textarea",
+              placeholder: "사료를 즐기지 않는 이유를 입력해주세요",
+              required: true,
+            },
+          ]
+        : []),
+
+      // 현재 식단 고민 정보 (Basic 플랜에만 표시)
+      ...(!isPremiumPlan
+        ? [
+            {
+              id: "mainConcern",
+              title: "현재 식단 고민 정보",
+              subtitle:
+                "아이의 질병/질환 예방 차원에서 건강 관리를 위해 주된 고민은 무엇인가요?",
+              description:
+                '(ex. 체중관리, 관절 관리, 저속노화 등) 없다면 "없다"라고 적어주세요.',
+              type: "textarea",
+              placeholder: "주된 건강 고민을 입력해주세요",
+              required: true,
+            },
+            {
+              id: "additionalInfo",
+              title: "현재 식단 고민 정보",
+              subtitle:
+                "현재 급여 중인 사료 분석을 위하여 참고하면 좋을 정보와 궁금하신 점을 자유롭게 작성해주세요 :-)",
+              type: "textarea",
+              placeholder: "추가 정보를 자유롭게 작성해주세요",
+              required: false,
+            },
+          ]
+        : []),
+
+      // 프리미엄 플랜 추가 항목
+      ...(isPremiumPlan
+        ? [
+            // 현재 및 선호 식이 정보
+            {
+              id: "reactionHistory",
+              title: "현재 및 선호 식이 정보",
+              subtitle:
+                "특정 음식 섭취 후 피부, 소화기 반응을 보인 적이 있나요?",
+              description:
+                '있다면 특정 음식과 반응에 대해 알려주시고, 없으면 "없다"라고 작성해주세요.',
+              type: "textarea",
+              placeholder: "반응 이력을 입력해주세요",
+              required: true,
+            },
+            {
+              id: "adaptability",
+              title: "현재 및 선호 식이 정보",
+              subtitle:
+                "새로운 음식에 대한 적응력은 어떤가요? 새로운 사료나 간식을 쉽게 받아들이나요, 아니면 거부감을 보이나요?",
+              type: "select",
+              options: [
+                "무엇이든 잘 먹어요!",
+                "처음에는 조금 낯설어 하지만 곧 잘 먹어요.",
+                "자기가 평소에 좋아하는 건 잘 먹지만 아닌건 시간이 좀 걸려요 또는 아예 안먹어요.",
+                "전체적으로 시간이 좀 걸리는 편이에요. 기호성을 따져요!",
+              ],
+              required: true,
+            },
+            {
+              id: "preferredProteins",
+              title: "현재 및 선호 식이 정보",
+              subtitle: "아이가 특히 좋아하는 단백질 원이 있나요?",
+              description: "다중 선택이 가능합니다.",
+              type: "multiselect",
+              options: [
+                "상관없이 다 잘 먹어요!",
+                "닭고기",
+                "칠면조",
+                "오리",
+                "거위",
+                "소고기",
+                "양고기",
+                "돼지고기",
+                "사슴고기",
+                "토끼",
+                "메뚜기/곤충",
+                "캥거루",
+                "연어",
+                "대구",
+                "청어",
+                "송어",
+                "방어",
+                "참치",
+                "멸치",
+                "정어리",
+              ],
+              required: true,
+            },
+            {
+              id: "avoidedProteins",
+              title: "현재 및 선호 식이 정보",
+              subtitle: "아이가 기피하는 단백질 원이 있나요?",
+              description: "다중 선택이 가능합니다.",
+              type: "multiselect",
+              options: [
+                "상관없이 다 잘 먹어요!",
+                "닭고기",
+                "칠면조",
+                "오리",
+                "거위",
+                "소고기",
+                "양고기",
+                "돼지고기",
+                "사슴고기",
+                "토끼",
+                "메뚜기/곤충",
+                "캥거루",
+                "연어",
+                "대구",
+                "청어",
+                "송어",
+                "방어",
+                "참치",
+                "멸치",
+                "정어리",
+              ],
+              required: true,
+            },
+            {
+              id: "texturePreference",
+              title: "현재 및 선호 식이 정보",
+              subtitle: "특정 식감에 대한 선호도가 있나요?",
+              type: "select",
+              options: ["바삭한", "부드러운", "상관 없다"],
+              required: true,
+            },
+            {
+              id: "refusalHistory",
+              title: "현재 및 선호 식이 정보",
+              subtitle: "음식을 거부한 경험이 있다면 어떤 특징이 있었나요?",
+              description:
+                '(특정 성분이나 첨가물 또는 식감/크기/모양 등) 없으면 "없다"라고 작성해주세요.',
+              type: "textarea",
+              placeholder: "거부 경험 특징을 입력해주세요",
+              required: true,
+            },
+            {
+              id: "kibbleSizePreference",
+              title: "현재 및 선호 식이 정보",
+              subtitle: "건식 기준 선호하는 키블 사이즈는 어떻게 되나요?",
+              type: "select",
+              options: [
+                "1cm 이상의 큰 입자 선호",
+                "1cm 미만의 작은 입자 선호",
+                "상관 없음",
+              ],
+              required: true,
+            },
+
+            // 보호자 선호도 정보
+            {
+              id: "budgetRange",
+              title: "보호자 선호도 정보",
+              subtitle:
+                "보호자님, 월 기준 제품(사료/토퍼/영양제 모두 포함) 구매에 투자할 수 있는 예산 범위는 어떻게 되나요?",
+              type: "select",
+              options: [
+                "5만원 미만",
+                "5만원 이상 10만원 미만",
+                "10만원 이상 20만원 미만",
+                "20만원 이상 30만원 미만",
+                "30만원 이상",
+              ],
+              required: true,
+            },
+            {
+              id: "overseasPurchase",
+              title: "보호자 선호도 정보",
+              subtitle: "보호자님, 해외 직구 구매에도 불편함이 없으신가요?",
+              type: "select",
+              options: [
+                "네",
+                "아니오",
+                "선호하지 않지만 꼭 필요하다면 가능해요",
+              ],
+              required: true,
+            },
+            {
+              id: "useAutoFeeder",
+              title: "보호자 선호도 정보",
+              subtitle: "보호자님, 자동 급식기를 사용하시나요?",
+              type: "select",
+              options: ["네", "아니오"],
+              required: true,
+            },
+            {
+              id: "preferredFoodType",
+              title: "보호자 선호도 정보",
+              subtitle:
+                "사료 형태 및 급여 형태 중 가장 선호하는 것을 알려주세요.",
+              description: "다중 선택이 가능합니다.",
+              type: "multiselect",
+              options: [
+                "건식 사료 (드라이 푸드)",
+                "반습식 사료(소프트 드라이)",
+                "습식 사료 (캔, 파우치 등)",
+                "화식",
+                "동결건조",
+                "에어드라이(공기 건조)",
+                "오븐베이크드",
+                "생식",
+                "크게 상관 없어요!",
+              ],
+              required: true,
+            },
+            {
+              id: "originPreference",
+              title: "보호자 선호도 정보",
+              subtitle:
+                "사료/토퍼/영양제 등의 제품 선택 시, 국내산 제조 또는 수입산 제조 제품에 대한 선호도가 있으신가요?",
+              type: "select",
+              options: [
+                "국내산 제조를 선호합니다.",
+                "수입산 제조를 선호합니다.",
+                "상관 없습니다.",
+              ],
+              required: true,
+            },
+            {
+              id: "needSupplements",
+              title: "보호자 선호도 정보",
+              subtitle: "영양제 급여가 필요하다고 생각하시나요?",
+              type: "select",
+              options: [
+                "네, 꼭 필요하다고 생각합니다.",
+                "아니오, 필수는 아니라고 생각합니다.",
+                "필수는 아니지만 급여하면 좋다고 생각합니다.",
+                "다른 것으로 대체 될 수 있다면 필수는 아니라고 생각합니다.",
+              ],
+              required: true,
+            },
+            {
+              id: "reasonForSupplements",
+              title: "보호자 선호도 정보",
+              subtitle: "영양제 급여를 고려하신 다면 주된 이유는 무엇인가요?",
+              description: "(ex. 예방 목적, 특정 증상 개선)",
+              type: "textarea",
+              placeholder: "영양제 급여 이유를 입력해주세요",
+              required: true,
+            },
+            {
+              id: "freezerSpace",
+              title: "보호자 선호도 정보",
+              subtitle: "집에 냉동 제품을 보관할 수 있는 공간이 충분한가요?",
+              type: "select",
+              options: [
+                "냉동고에 공간이 충분해요",
+                "냉동고 공간에 제약이 있어요",
+                "냉동 제품은 선호하지 않아요",
+              ],
+              required: true,
+            },
+
+            // 신규 식단 설계를 위한 추가 정보
+            {
+              id: "healthConcerns",
+              title: "신규 식단 설계를 위한 추가 정보",
+              subtitle:
+                "아이의 질병/질환 예방 차원에서 건강 관리를 위해 주된 고민은 무엇인가요?",
+              description:
+                '(ex. 체중관리, 관절 관리, 저속노화 등) 없다면 "없다"라고 적어주세요.',
+              type: "textarea",
+              placeholder: "주된 건강 고민을 입력해주세요",
+              required: true,
+            },
+            {
+              id: "pastFoods",
+              title: "신규 식단 설계를 위한 추가 정보",
+              subtitle: "현재가 아닌 과거에 급여 하셨던 제품명을 기재해주세요!",
+              type: "textarea",
+              placeholder: "과거 급여 제품명을 입력해주세요",
+              required: true,
+            },
+            {
+              id: "excludedFoods",
+              title: "신규 식단 설계를 위한 추가 정보",
+              subtitle:
+                "식단 설계 시, 제외하고 싶은 제품이 있다면 제품명을 알려주세요!",
+              description:
+                '맞춤형 식단 설계의 경우, 아이에게 만족스럽고 영양과 원료 및 제조 품질에서도 우수하다면 과거 급여 제품을 보완하는 방향으로도 설계가 가능합니다. 다만, 과거를 포함해 급여 시 문제가 있었거나 순환 급여 등의 이유로 변경을 희망하실 경우, 제외하고 싶은 제품명을 알려주세요. 브랜드 명과 제품 명을 정확히 기입해주셔야 추천에서 제외됩니다. 없다면 "없다"라고 적어주세요.',
+              type: "textarea",
+              placeholder: "제외 희망 제품명을 입력해주세요",
+              required: true,
+            },
+            {
+              id: "inquiry",
+              title: "신규 식단 설계를 위한 추가 정보",
+              subtitle:
+                "식단 분석 및 설계를 위하여 참고하면 좋을 정보와 궁금하신 점을 자유롭게 작성해주세요 :-)",
+              description: '없다면 "없다"라고 적어주세요.',
+              type: "textarea",
+              placeholder: "기타 문의 사항을 입력해주세요",
+              required: false,
+            },
+          ]
+        : []),
+    ],
     [
-      "그냥 그럭저럭 먹는다",
-      "잘 먹지 않고 음식을 남긴다",
-      "먹긴 먹는데 나눠서 조금씩 텀을 누고 먹는다",
-    ].includes(formData.foodReaction)
-      ? [
-          {
-            id: "foodDislikeReason",
-            title: "현재 급여 식단 정보",
-            subtitle:
-              "현재 먹이고 있는 사료를 '즐기지 않는다면', 이유가 무엇이라고 생각하시나요?",
-            type: "textarea",
-            placeholder: "사료를 즐기지 않는 이유를 입력해주세요",
-            required: true,
-          },
-        ]
-      : []),
-
-    // 현재 식단 고민 정보 (Basic 플랜에만 표시)
-    ...(!isPremiumPlan
-      ? [
-          {
-            id: "mainConcern",
-            title: "현재 식단 고민 정보",
-            subtitle:
-              "아이의 질병/질환 예방 차원에서 건강 관리를 위해 주된 고민은 무엇인가요?",
-            description:
-              '(ex. 체중관리, 관절 관리, 저속노화 등) 없다면 "없다"라고 적어주세요.',
-            type: "textarea",
-            placeholder: "주된 건강 고민을 입력해주세요",
-            required: true,
-          },
-          {
-            id: "additionalInfo",
-            title: "현재 식단 고민 정보",
-            subtitle:
-              "현재 급여 중인 사료 분석을 위하여 참고하면 좋을 정보와 궁금하신 점을 자유롭게 작성해주세요 :-)",
-            type: "textarea",
-            placeholder: "추가 정보를 자유롭게 작성해주세요",
-            required: false,
-          },
-        ]
-      : []),
-
-    // 프리미엄 플랜 추가 항목
-    ...(isPremiumPlan
-      ? [
-          // 현재 및 선호 식이 정보
-          {
-            id: "reactionHistory",
-            title: "현재 및 선호 식이 정보",
-            subtitle: "특정 음식 섭취 후 피부, 소화기 반응을 보인 적이 있나요?",
-            description:
-              '있다면 특정 음식과 반응에 대해 알려주시고, 없으면 "없다"라고 작성해주세요.',
-            type: "textarea",
-            placeholder: "반응 이력을 입력해주세요",
-            required: true,
-          },
-          {
-            id: "adaptability",
-            title: "현재 및 선호 식이 정보",
-            subtitle:
-              "새로운 음식에 대한 적응력은 어떤가요? 새로운 사료나 간식을 쉽게 받아들이나요, 아니면 거부감을 보이나요?",
-            type: "select",
-            options: [
-              "무엇이든 잘 먹어요!",
-              "처음에는 조금 낯설어 하지만 곧 잘 먹어요.",
-              "자기가 평소에 좋아하는 건 잘 먹지만 아닌건 시간이 좀 걸려요 또는 아예 안먹어요.",
-              "전체적으로 시간이 좀 걸리는 편이에요. 기호성을 따져요!",
-            ],
-            required: true,
-          },
-          {
-            id: "preferredProteins",
-            title: "현재 및 선호 식이 정보",
-            subtitle: "아이가 특히 좋아하는 단백질 원이 있나요?",
-            description: "다중 선택이 가능합니다.",
-            type: "multiselect",
-            options: [
-              "상관없이 다 잘 먹어요!",
-              "닭고기",
-              "칠면조",
-              "오리",
-              "거위",
-              "소고기",
-              "양고기",
-              "돼지고기",
-              "사슴고기",
-              "토끼",
-              "메뚜기/곤충",
-              "캥거루",
-              "연어",
-              "대구",
-              "청어",
-              "송어",
-              "방어",
-              "참치",
-              "멸치",
-              "정어리",
-            ],
-            required: true,
-          },
-          {
-            id: "avoidedProteins",
-            title: "현재 및 선호 식이 정보",
-            subtitle: "아이가 기피하는 단백질 원이 있나요?",
-            description: "다중 선택이 가능합니다.",
-            type: "multiselect",
-            options: [
-              "상관없이 다 잘 먹어요!",
-              "닭고기",
-              "칠면조",
-              "오리",
-              "거위",
-              "소고기",
-              "양고기",
-              "돼지고기",
-              "사슴고기",
-              "토끼",
-              "메뚜기/곤충",
-              "캥거루",
-              "연어",
-              "대구",
-              "청어",
-              "송어",
-              "방어",
-              "참치",
-              "멸치",
-              "정어리",
-            ],
-            required: true,
-          },
-          {
-            id: "texturePreference",
-            title: "현재 및 선호 식이 정보",
-            subtitle: "특정 식감에 대한 선호도가 있나요?",
-            type: "select",
-            options: ["바삭한", "부드러운", "상관 없다"],
-            required: true,
-          },
-          {
-            id: "refusalHistory",
-            title: "현재 및 선호 식이 정보",
-            subtitle: "음식을 거부한 경험이 있다면 어떤 특징이 있었나요?",
-            description:
-              '(특정 성분이나 첨가물 또는 식감/크기/모양 등) 없으면 "없다"라고 작성해주세요.',
-            type: "textarea",
-            placeholder: "거부 경험 특징을 입력해주세요",
-            required: true,
-          },
-          {
-            id: "kibbleSizePreference",
-            title: "현재 및 선호 식이 정보",
-            subtitle: "건식 기준 선호하는 키블 사이즈는 어떻게 되나요?",
-            type: "select",
-            options: [
-              "1cm 이상의 큰 입자 선호",
-              "1cm 미만의 작은 입자 선호",
-              "상관 없음",
-            ],
-            required: true,
-          },
-
-          // 보호자 선호도 정보
-          {
-            id: "budgetRange",
-            title: "보호자 선호도 정보",
-            subtitle:
-              "보호자님, 월 기준 제품(사료/토퍼/영양제 모두 포함) 구매에 투자할 수 있는 예산 범위는 어떻게 되나요?",
-            type: "select",
-            options: [
-              "5만원 미만",
-              "5만원 이상 10만원 미만",
-              "10만원 이상 20만원 미만",
-              "20만원 이상 30만원 미만",
-              "30만원 이상",
-            ],
-            required: true,
-          },
-          {
-            id: "overseasPurchase",
-            title: "보호자 선호도 정보",
-            subtitle: "보호자님, 해외 직구 구매에도 불편함이 없으신가요?",
-            type: "select",
-            options: ["네", "아니오", "선호하지 않지만 꼭 필요하다면 가능해요"],
-            required: true,
-          },
-          {
-            id: "useAutoFeeder",
-            title: "보호자 선호도 정보",
-            subtitle: "보호자님, 자동 급식기를 사용하시나요?",
-            type: "select",
-            options: ["네", "아니오"],
-            required: true,
-          },
-          {
-            id: "preferredFoodType",
-            title: "보호자 선호도 정보",
-            subtitle:
-              "사료 형태 및 급여 형태 중 가장 선호하는 것을 알려주세요.",
-            description: "다중 선택이 가능합니다.",
-            type: "multiselect",
-            options: [
-              "건식 사료 (드라이 푸드)",
-              "반습식 사료(소프트 드라이)",
-              "습식 사료 (캔, 파우치 등)",
-              "화식",
-              "동결건조",
-              "에어드라이(공기 건조)",
-              "오븐베이크드",
-              "생식",
-              "크게 상관 없어요!",
-            ],
-            required: true,
-          },
-          {
-            id: "originPreference",
-            title: "보호자 선호도 정보",
-            subtitle:
-              "사료/토퍼/영양제 등의 제품 선택 시, 국내산 제조 또는 수입산 제조 제품에 대한 선호도가 있으신가요?",
-            type: "select",
-            options: [
-              "국내산 제조를 선호합니다.",
-              "수입산 제조를 선호합니다.",
-              "상관 없습니다.",
-            ],
-            required: true,
-          },
-          {
-            id: "needSupplements",
-            title: "보호자 선호도 정보",
-            subtitle: "영양제 급여가 필요하다고 생각하시나요?",
-            type: "select",
-            options: [
-              "네, 꼭 필요하다고 생각합니다.",
-              "아니오, 필수는 아니라고 생각합니다.",
-              "필수는 아니지만 급여하면 좋다고 생각합니다.",
-              "다른 것으로 대체 될 수 있다면 필수는 아니라고 생각합니다.",
-            ],
-            required: true,
-          },
-          {
-            id: "reasonForSupplements",
-            title: "보호자 선호도 정보",
-            subtitle: "영양제 급여를 고려하신 다면 주된 이유는 무엇인가요?",
-            description: "(ex. 예방 목적, 특정 증상 개선)",
-            type: "textarea",
-            placeholder: "영양제 급여 이유를 입력해주세요",
-            required: true,
-          },
-          {
-            id: "freezerSpace",
-            title: "보호자 선호도 정보",
-            subtitle: "집에 냉동 제품을 보관할 수 있는 공간이 충분한가요?",
-            type: "select",
-            options: [
-              "냉동고에 공간이 충분해요",
-              "냉동고 공간에 제약이 있어요",
-              "냉동 제품은 선호하지 않아요",
-            ],
-            required: true,
-          },
-
-          // 신규 식단 설계를 위한 추가 정보
-          {
-            id: "healthConcerns",
-            title: "신규 식단 설계를 위한 추가 정보",
-            subtitle:
-              "아이의 질병/질환 예방 차원에서 건강 관리를 위해 주된 고민은 무엇인가요?",
-            description:
-              '(ex. 체중관리, 관절 관리, 저속노화 등) 없다면 "없다"라고 적어주세요.',
-            type: "textarea",
-            placeholder: "주된 건강 고민을 입력해주세요",
-            required: true,
-          },
-          {
-            id: "pastFoods",
-            title: "신규 식단 설계를 위한 추가 정보",
-            subtitle: "현재가 아닌 과거에 급여 하셨던 제품명을 기재해주세요!",
-            type: "textarea",
-            placeholder: "과거 급여 제품명을 입력해주세요",
-            required: true,
-          },
-          {
-            id: "excludedFoods",
-            title: "신규 식단 설계를 위한 추가 정보",
-            subtitle:
-              "식단 설계 시, 제외하고 싶은 제품이 있다면 제품명을 알려주세요!",
-            description:
-              '맞춤형 식단 설계의 경우, 아이에게 만족스럽고 영양과 원료 및 제조 품질에서도 우수하다면 과거 급여 제품을 보완하는 방향으로도 설계가 가능합니다. 다만, 과거를 포함해 급여 시 문제가 있었거나 순환 급여 등의 이유로 변경을 희망하실 경우, 제외하고 싶은 제품명을 알려주세요. 브랜드 명과 제품 명을 정확히 기입해주셔야 추천에서 제외됩니다. 없다면 "없다"라고 적어주세요.',
-            type: "textarea",
-            placeholder: "제외 희망 제품명을 입력해주세요",
-            required: true,
-          },
-          {
-            id: "inquiry",
-            title: "신규 식단 설계를 위한 추가 정보",
-            subtitle:
-              "식단 분석 및 설계를 위하여 참고하면 좋을 정보와 궁금하신 점을 자유롭게 작성해주세요 :-)",
-            description: '없다면 "없다"라고 적어주세요.',
-            type: "textarea",
-            placeholder: "기타 문의 사항을 입력해주세요",
-            required: false,
-          },
-        ]
-      : []),
-  ];
+      formData.gender,
+      formData.foodReaction,
+      needsProductAnalysis,
+      isPremiumPlan,
+    ]
+  );
 
   const handleNext = () => {
     // 에러 상태일 때는 다음 단계로 진행하지 않음
